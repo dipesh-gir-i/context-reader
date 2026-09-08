@@ -4,17 +4,31 @@
 
 A Manifest V3 Chrome extension that explains unfamiliar PDF words using the sentence and nearby context rather than a generic dictionary definition.
 
+![Context Reader logo](images/logo.png)
+
+## Screenshots
+
+![Reader view](images/screenshot-1.png)
+
+![PDF navigation and search](images/screenshot-2.png)
+
+![Context feedback and settings](images/screenshot-3.png)
+
 ## What works in this MVP
 
 - Dedicated extension reader page instead of a cramped toolbar popup
 - Local PDF upload and drag-ready reader entry point
 - PDF.js rendering with selectable text overlay
+- Open and Close PDF controls with refresh persistence
+- Find words or phrases across the PDF with highlighted matches, result counts, and previous/next result navigation
 - Word selection → sentence/paragraph context extraction
 - Contextual AI request through the MV3 service worker
 - BYO API key settings
 - Gemini and a token-free dummy provider abstraction
 - Local IndexedDB history and saved words
 - Context AI side panel
+- Feedback form with type, message, and optional email fields
+- Local feedback backend that stores submissions in `feedback.jsonl`
 - Settings, loading, success, and error states
 - Local-first design: PDFs are not uploaded to a Context Reader backend
 
@@ -29,6 +43,10 @@ A Manifest V3 Chrome extension that explains unfamiliar PDF words using the sent
 7. Select the generated `dist/` folder.
 8. Click the extension icon and choose **Open Reader**.
 9. Open Settings and choose **Dummy (development)** for token-free local testing, or add an API key for a real provider.
+
+## Feedback backend
+
+Run `npm run feedback-server` from this folder while testing the feedback form. It listens on `http://localhost:8787` and appends submissions to `feedback.jsonl`.
 
 ## Notes
 
