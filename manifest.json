@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Context Reader",
+  "version": "0.1.0",
+  "version_name": "0.1.0 MVP",
+  "description": "A local-first AI PDF reader that explains words in context.",
+  "action": {
+    "default_title": "Open Context Reader",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "src/background.ts",
+    "type": "module"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "options_page": "settings.html",
+  "web_accessible_resources": [
+    {
+      "resources": ["*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

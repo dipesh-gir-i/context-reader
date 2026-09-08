@@ -1,0 +1,61 @@
+# Context Reader
+
+> The ZIP contains a top-level `context-reader` folder. Run all npm commands from inside that folder.
+
+A Manifest V3 Chrome extension that explains unfamiliar PDF words using the sentence and nearby context rather than a generic dictionary definition.
+
+## What works in this MVP
+
+- Dedicated extension reader page instead of a cramped toolbar popup
+- Local PDF upload and drag-ready reader entry point
+- PDF.js rendering with selectable text overlay
+- Word selection → sentence/paragraph context extraction
+- Contextual AI request through the MV3 service worker
+- BYO API key settings
+- Gemini and a token-free dummy provider abstraction
+- Local IndexedDB history and saved words
+- Context AI side panel
+- Settings, loading, success, and error states
+- Local-first design: PDFs are not uploaded to a Context Reader backend
+
+## Install for development
+
+1. Install Node.js 20+.
+2. Run `npm install`.
+3. Run `npm run build`.
+4. Open `chrome://extensions`.
+5. Turn on **Developer mode**.
+6. Choose **Load unpacked**.
+7. Select the generated `dist/` folder.
+8. Click the extension icon and choose **Open Reader**.
+9. Open Settings and choose **Dummy (development)** for token-free local testing, or add an API key for a real provider.
+
+## Notes
+
+The build expects `pdfjs-dist` to be installed locally. PDF.js is bundled from the npm package so the extension does not rely on remote JavaScript at runtime.
+
+The current provider permissions are intentionally limited to Google AI. The **Dummy (development)** provider runs deterministic answers locally and makes no network requests. If you add another fixed provider, add its origin narrowly to `host_permissions` and to the provider registry. Do not turn custom user-entered URLs into unrestricted host permissions.
+
+Chrome local storage is not encrypted. The settings UI makes this explicit. With **Remember key off**, the extension prefers `chrome.storage.session`; with it on, the key is persisted locally.
+
+The reader persists the currently opened PDF locally so an accidental refresh can restore it, along with the last page viewed. Saved/history items still keep metadata and context rather than exposing the original PDF outside this browser.
+
+## Architecture
+
+```text
+reader.html
+  ├─ PDF.js rendering + text layer
+  ├─ selection/context extraction
+  ├─ React UI
+  └─ chrome.runtime messaging
+           ↓
+    MV3 service worker
+           ↓
+    provider adapter → AI API
+           ↓
+    structured JSON → Context AI panel
+```
+
+## Design reference
+
+The visual language is documented in `DESIGN.md` and was shaped by the provided Taste Skill, Vercel Web Design Guidelines, and Awesome DESIGN.md references. PDF.js is used as the rendering foundation rather than embedding the unmodified stock viewer.
