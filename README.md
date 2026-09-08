@@ -34,7 +34,7 @@ A Manifest V3 Chrome extension that explains unfamiliar PDF words using the sent
 
 ## Install for development
 
-1. Install Node.js 20+.
+1. Install Node.js 24.20 LTS.
 2. Run `npm install`.
 3. Run `npm run build`.
 4. Open `chrome://extensions`.
