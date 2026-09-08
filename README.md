@@ -30,6 +30,10 @@ A Manifest V3 Chrome extension that explains unfamiliar PDF words using the sent
 8. Click the extension icon and choose **Open Reader**.
 9. Open Settings and choose **Dummy (development)** for token-free local testing, or add an API key for a real provider.
 
+## Feedback backend
+
+Run `npm run feedback-server` from this folder while testing the feedback form. It listens on `http://localhost:8787` and appends submissions to `feedback.jsonl`.
+
 ## Notes
 
 The build expects `pdfjs-dist` to be installed locally. PDF.js is bundled from the npm package so the extension does not rely on remote JavaScript at runtime.

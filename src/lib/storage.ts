@@ -49,6 +49,26 @@ async function getAll<T>(storeName: string): Promise<T[]> {
 }
 
 export async function saveDocument(doc: DocumentRecord) { return put('documents', doc); }
+export async function deleteDocument(id: string) {
+  const db = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('documents', 'readwrite');
+    tx.objectStore('documents').delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+}
+export async function clearDocuments() {
+  const db = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('documents', 'readwrite');
+    tx.objectStore('documents').clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+}
 export async function saveLookup(lookup: Lookup) { return put('lookups', lookup); }
 export async function saveWord(word: SavedWord) { return put('saved', word); }
 export async function getLookups() { return (await getAll<Lookup>('lookups')).sort((a, b) => b.createdAt - a.createdAt); }

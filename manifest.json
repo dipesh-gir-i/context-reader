@@ -4,6 +4,12 @@
   "version": "0.1.0",
   "version_name": "0.1.0 MVP",
   "description": "A local-first AI PDF reader that explains words in context.",
+  "icons": {
+    "16": "images/logo.png",
+    "32": "images/logo.png",
+    "48": "images/logo.png",
+    "128": "images/logo.png"
+  },
   "action": {
     "default_title": "Open Context Reader",
     "default_popup": "popup.html"
@@ -14,7 +20,8 @@
   },
   "permissions": ["storage"],
   "host_permissions": [
-    "https://generativelanguage.googleapis.com/*"
+    "https://generativelanguage.googleapis.com/*",
+    "http://localhost:8787/*"
   ],
   "options_page": "settings.html",
   "web_accessible_resources": [
