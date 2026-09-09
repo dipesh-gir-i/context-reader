@@ -24,7 +24,7 @@ A Manifest V3 Chrome extension that explains unfamiliar PDF words using the sent
 - Word selection → sentence/paragraph context extraction
 - Contextual AI request through the MV3 service worker
 - BYO API key settings
-- Gemini and a token-free dummy provider abstraction
+- Gemini, NVIDIA NIM, and a token-free dummy provider abstraction
 - Local IndexedDB history and saved words
 - Context AI side panel
 - Feedback form with type, message, and optional email fields
@@ -42,7 +42,13 @@ A Manifest V3 Chrome extension that explains unfamiliar PDF words using the sent
 6. Choose **Load unpacked**.
 7. Select the generated `dist/` folder.
 8. Click the extension icon and choose **Open Reader**.
-9. Open Settings and choose **Dummy (development)** for token-free local testing, or add an API key for a real provider.
+9. Open Settings and choose **Dummy (development)** for token-free local testing, or add an API key for Gemini or NVIDIA NIM.
+
+### Supported AI providers
+
+- **Google Gemini**: `gemini-3.6-flash`
+- **NVIDIA NIM**: `muse/glimmer-30b`, `moonshotai/kimi-k3`, or `deepseek-ai/deepseek-v4-flash-0731`
+- **Dummy (development)**: `dummy-local`, with deterministic local answers and no API key
 
 ## Feedback backend
 
@@ -52,7 +58,7 @@ Run `npm run feedback-server` from this folder while testing the feedback form. 
 
 The build expects `pdfjs-dist` to be installed locally. PDF.js is bundled from the npm package so the extension does not rely on remote JavaScript at runtime.
 
-The current provider permissions are intentionally limited to Google AI. The **Dummy (development)** provider runs deterministic answers locally and makes no network requests. If you add another fixed provider, add its origin narrowly to `host_permissions` and to the provider registry. Do not turn custom user-entered URLs into unrestricted host permissions.
+The current provider permissions are intentionally limited to Google AI and NVIDIA NIM. The **Dummy (development)** provider runs deterministic answers locally and makes no network requests. If you add another fixed provider, add its origin narrowly to `host_permissions` and to the provider registry. Do not turn custom user-entered URLs into unrestricted host permissions.
 
 Chrome local storage is not encrypted. The settings UI makes this explicit. With **Remember key off**, the extension prefers `chrome.storage.session`; with it on, the key is persisted locally.
 
