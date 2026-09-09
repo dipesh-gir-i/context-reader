@@ -78,12 +78,15 @@ export async function getDocuments() { return (await getAll<DocumentRecord>('doc
 export async function getSettings(): Promise<AppSettings> {
   const result = await chrome.storage.local.get('settings');
   const settings = { ...DEFAULT_SETTINGS, ...(result.settings ?? {}) } as AppSettings;
-  if (settings.provider !== 'gemini' && settings.provider !== 'dummy') {
+  if (settings.provider !== 'gemini' && settings.provider !== 'nvidia' && settings.provider !== 'dummy') {
     settings.provider = 'dummy';
     settings.model = 'dummy-local';
   }
   if (settings.provider === 'gemini' && settings.model !== 'gemini-3.6-flash') {
     settings.model = 'gemini-3.6-flash';
+  }
+  if (settings.provider === 'nvidia' && !['muse/glimmer-30b', 'moonshotai/kimi-k3', 'deepseek-ai/deepseek-v4-flash-0731'].includes(settings.model)) {
+    settings.model = 'muse/glimmer-30b';
   }
   return settings;
 }

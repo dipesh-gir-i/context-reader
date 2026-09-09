@@ -1,4 +1,4 @@
-export type ProviderId = 'gemini' | 'dummy';
+export type ProviderId = 'gemini' | 'nvidia' | 'dummy';
 
 export interface AppSettings {
   provider: ProviderId;
