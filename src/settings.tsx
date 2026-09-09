@@ -6,7 +6,8 @@ import type { AppSettings, ProviderId } from './types';
 
 const providers: Record<ProviderId, { label: string; models: string[]; note: string }> = {
   dummy: { label: 'Dummy (development)', models: ['dummy-local'], note: 'Runs locally with deterministic sample answers. No API key or network request is required.' },
-  gemini: { label: 'Google Gemini', models: ['gemini-3.6-flash'], note: 'Uses the Gemini generateContent endpoint.' }
+  gemini: { label: 'Google Gemini', models: ['gemini-3.6-flash'], note: 'Uses the Gemini generateContent endpoint.' },
+  nvidia: { label: 'NVIDIA NIM', models: ['muse/glimmer-30b', 'moonshotai/kimi-k3', 'deepseek-ai/deepseek-v4-flash-0731'], note: 'Uses NVIDIA NIM’s OpenAI-compatible chat completions endpoint.' }
 };
 
 function Settings() {

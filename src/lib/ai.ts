@@ -43,6 +43,16 @@ async function providerError(response: Response): Promise<Error> {
 
 export async function explainViaProvider(provider: ProviderId, model: string, apiKey: string, context: LookupContext): Promise<ContextAnswer> {
   if (provider === 'dummy') return explainWithDummy(context);
+  if (provider === 'nvidia') {
+    const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: payload(context) }], temperature: 0.2 })
+    });
+    if (!response.ok) throw await providerError(response);
+    const data = await response.json();
+    return parseAnswer(data.choices?.[0]?.message?.content ?? '', context.word);
+  }
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
