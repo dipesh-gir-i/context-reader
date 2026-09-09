@@ -6,6 +6,7 @@ import '../styles.css';
 import { Icon } from '../components/Icon';
 import { cleanSelectedWord, extractContext } from '../lib/context';
 import { clearDocuments, getDocuments, getLookups, getSavedWords, getSettings, saveDocument, saveLookup, saveWord } from '../lib/storage';
+import { applyTheme, watchSystemTheme } from '../lib/theme';
 import type { AppSettings, ContextAnswer, DocumentRecord, LookupContext, Lookup, SavedWord } from '../types';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
@@ -55,6 +56,7 @@ function App() {
       const [settingsValue, savedWords, lookups, documentRecords] = await Promise.all([getSettings(), getSavedWords(), getLookups(), getDocuments()]);
       if (cancelled) return;
       setSettings(settingsValue); setPanelOpen(settingsValue.panelOpen);
+      applyTheme(settingsValue.theme);
       setSaved(savedWords); setHistory(lookups); setDocuments(documentRecords);
 
       const recentDocument = documentRecords.find((document) => document.pdfData);
@@ -73,11 +75,14 @@ function App() {
     return () => { cancelled = true; };
   }, []);
 
+  useEffect(() => watchSystemTheme(settings.theme), [settings.theme]);
+
   useEffect(() => {
     const handleSettingsChange = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
       if (areaName !== 'local' || !changes.settings?.newValue) return;
       getSettings().then((nextSettings) => {
         setSettings(nextSettings);
+        applyTheme(nextSettings.theme);
         setPanelOpen(nextSettings.panelOpen);
         if (pdfRef.current) void renderPage(pdfRef.current, pageNum, zoomLevel);
       });
