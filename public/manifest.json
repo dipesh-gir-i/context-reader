@@ -20,6 +20,7 @@
   },
   "permissions": ["storage"],
   "host_permissions": [
+    "https://api.openai.com/*",
     "https://generativelanguage.googleapis.com/*",
     "https://integrate.api.nvidia.com/*",
     "http://localhost:8787/*"

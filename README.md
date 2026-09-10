@@ -14,6 +14,8 @@ A Manifest V3 Chrome extension that explains unfamiliar PDF words using the sent
 
 ![Context feedback and settings](images/screenshot-3.png)
 
+![Contextual explanation panel](images/screenshot-4.png)
+
 ## What works in this MVP
 
 - Dedicated extension reader page instead of a cramped toolbar popup
@@ -22,9 +24,10 @@ A Manifest V3 Chrome extension that explains unfamiliar PDF words using the sent
 - Open and Close PDF controls with refresh persistence
 - Find words or phrases across the PDF with highlighted matches, result counts, and previous/next result navigation
 - Word selection → sentence/paragraph context extraction
-- Contextual AI request through the MV3 service worker
+- Contextual AI request through the MV3 service worker, using the selected word and nearby sentence/paragraph
 - BYO API key settings
-- Gemini, NVIDIA NIM, and a token-free dummy provider abstraction
+- OpenAI, Google Gemini, NVIDIA NIM, and a token-free dummy provider abstraction
+- Structured contextual responses with a meaning, explanation, and same-sense example
 - Local IndexedDB history and saved words
 - Context AI side panel
 - Feedback form with type, message, and optional email fields
@@ -42,12 +45,13 @@ A Manifest V3 Chrome extension that explains unfamiliar PDF words using the sent
 6. Choose **Load unpacked**.
 7. Select the generated `dist/` folder.
 8. Click the extension icon and choose **Open Reader**.
-9. Open Settings and choose **Dummy (development)** for token-free local testing, or add an API key for Gemini or NVIDIA NIM.
+9. Open Settings and choose **Dummy (development)** for token-free local testing, or add an API key for OpenAI, Gemini, or NVIDIA NIM.
 
 ### Supported AI providers
 
-- **Google Gemini**: `gemini-3.6-flash`
-- **NVIDIA NIM**: `muse/glimmer-30b`, `moonshotai/kimi-k3`, or `deepseek-ai/deepseek-v4-flash-0731`
+- **OpenAI**: `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`, `gpt-4o`, `gpt-4o-mini`, `o3`, `o3-mini`, or `o4-mini`, through the OpenAI chat completions API
+- **Google Gemini**: `gemini-3.6-flash`, `gemini-3.6-pro`, `gemini-2.5-pro`, `gemini-2.5-flash`, or `gemini-2.5-flash-lite`, through Gemini `generateContent`
+- **NVIDIA NIM**: `muse/glimmer-30b`, `moonshotai/kimi-k3`, or `deepseek-ai/deepseek-v4-flash-0731`, through NVIDIA's OpenAI-compatible chat completions API
 - **Dummy (development)**: `dummy-local`, with deterministic local answers and no API key
 
 ## Feedback backend
@@ -58,11 +62,13 @@ Run `npm run feedback-server` from this folder while testing the feedback form. 
 
 The build expects `pdfjs-dist` to be installed locally. PDF.js is bundled from the npm package so the extension does not rely on remote JavaScript at runtime.
 
-The current provider permissions are intentionally limited to Google AI and NVIDIA NIM. The **Dummy (development)** provider runs deterministic answers locally and makes no network requests. If you add another fixed provider, add its origin narrowly to `host_permissions` and to the provider registry. Do not turn custom user-entered URLs into unrestricted host permissions.
+The current provider permissions are intentionally limited to OpenAI, Google AI, and NVIDIA NIM. The **Dummy (development)** provider runs deterministic answers locally and makes no network requests. If you add another fixed provider, add its origin narrowly to `host_permissions` and to the provider registry. Do not turn custom user-entered URLs into unrestricted host permissions.
 
 Chrome local storage is not encrypted. The settings UI makes this explicit. With **Remember key off**, the extension prefers `chrome.storage.session`; with it on, the key is persisted locally.
 
 The reader persists the currently opened PDF locally so an accidental refresh can restore it, along with the last page viewed. Saved/history items still keep metadata and context rather than exposing the original PDF outside this browser.
+
+The reading prompt is defined in `src/lib/ai.ts`. It requires JSON with exactly `meaning`, `explanation`, and `example` fields, and asks each provider to prioritize the selected word's meaning in its surrounding passage. NVIDIA NIM requests are explicitly non-streaming and bounded to 512 output tokens; provider error responses expose the API's diagnostic detail in Settings.
 
 ## Architecture
 
