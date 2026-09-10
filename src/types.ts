@@ -1,4 +1,4 @@
-export type ProviderId = 'gemini' | 'nvidia' | 'dummy';
+export type ProviderId = 'openai' | 'gemini' | 'nvidia' | 'dummy';
 
 export interface AppSettings {
   provider: ProviderId;
@@ -21,11 +21,9 @@ export interface LookupContext {
 }
 
 export interface ContextAnswer {
-  word: string;
   meaning: string;
-  simplerExplanation: string;
-  whyItMatters: string;
-  confidence: number;
+  explanation: string;
+  example: string;
 }
 
 export interface SavedWord {

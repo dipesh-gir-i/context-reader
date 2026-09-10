@@ -1,40 +1,69 @@
 import type { ContextAnswer, LookupContext, ProviderId } from '../types';
 
-const systemPrompt = `You explain what a word means in the exact context where a reader encountered it.\n\nReturn ONLY valid JSON with these fields:\nword, meaning, simplerExplanation, whyItMatters, confidence.\n\nRules:\n- Prefer the contextual sense over a generic dictionary sense.\n- Use plain, concise language.\n- meaning: one sentence, ideally under 24 words.\n- simplerExplanation: one short sentence a learner could understand.\n- whyItMatters: briefly connect the meaning to the surrounding sentence.\n- confidence: number from 0 to 1.\n- If context is ambiguous, say so briefly instead of inventing certainty.\n- Never discuss your own process.`;
+const systemPrompt = `You are an AI reading assistant inside a PDF reader.
 
-function payload(c: LookupContext) {
-  return `${systemPrompt}\n\nContext:\n${JSON.stringify(c)}`;
+Your task is to explain the meaning of a selected word or phrase **based primarily on the context in which it appears**.
+
+### Selected word
+{{word}}
+
+### Surrounding context
+{{context}}
+
+Analyze the selected word using the surrounding sentence and nearby paragraph. Do not rely on a generic dictionary definition if the context indicates a more specific meaning.
+
+Return your answer as valid JSON with exactly these fields:
+
+{
+  "meaning": "A concise definition of what the word means in this specific context.",
+  "explanation": "Explain how the surrounding context leads to this meaning. Keep it understandable and concise.",
+  "example": "Give one short example sentence using the word with the same meaning."
 }
 
-function parseAnswer(raw: string, fallbackWord: string): ContextAnswer {
+Rules:
+
+- Identify the meaning intended by the author in this specific passage.
+- Prefer the contextual meaning over the most common dictionary meaning.
+- Consider the grammatical role and surrounding words.
+- If the word has multiple possible meanings, select the one best supported by the context.
+- Do not invent facts that are not present or implied by the context.
+- Do not repeat the entire passage.
+- Keep the explanation concise and useful to someone reading the PDF.
+- If the context is insufficient to determine the meaning confidently, say so rather than guessing.
+- Preserve the original meaning of the word; do not unnecessarily simplify it into an inaccurate synonym.
+- The example should demonstrate the same sense of the word, not a different meaning.
+- Return JSON only. Do not include Markdown, code fences, or additional text.`;
+
+function payload(c: LookupContext) {
+  const context = `Sentence: ${c.sentence}\nParagraph: ${c.paragraph}`;
+  return systemPrompt.replace('{{word}}', c.word).replace('{{context}}', context);
+}
+
+function parseAnswer(raw: string): ContextAnswer {
   const clean = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
   const start = clean.indexOf('{');
   const end = clean.lastIndexOf('}');
   const json = JSON.parse(clean.slice(start >= 0 ? start : 0, end >= 0 ? end + 1 : undefined));
   return {
-    word: String(json.word ?? fallbackWord),
     meaning: String(json.meaning ?? ''),
-    simplerExplanation: String(json.simplerExplanation ?? ''),
-    whyItMatters: String(json.whyItMatters ?? ''),
-    confidence: Math.max(0, Math.min(1, Number(json.confidence ?? 0.5)))
+    explanation: String(json.explanation ?? ''),
+    example: String(json.example ?? '')
   };
 }
 
 function explainWithDummy(context: LookupContext): ContextAnswer {
   return {
-    word: context.word,
     meaning: `A development answer for “${context.word}” based on this passage.`,
-    simplerExplanation: `In simple terms, “${context.word}” is being used as part of the idea in this sentence.`,
-    whyItMatters: `The word appears in: “${context.sentence}”`,
-    confidence: 0.5
+    explanation: `The surrounding sentence uses “${context.word}” in this specific sense.`,
+    example: `The same idea appears when someone says, “${context.sentence}”`
   };
 }
 
 async function providerError(response: Response): Promise<Error> {
   let detail = '';
   try {
-    const body = await response.json() as { error?: { message?: string } | string };
-    detail = typeof body.error === 'string' ? body.error : body.error?.message ?? '';
+    const body = await response.json() as { error?: { message?: string } | string; detail?: string; message?: string; title?: string };
+    detail = typeof body.error === 'string' ? body.error : body.error?.message ?? body.detail ?? body.message ?? body.title ?? '';
   } catch {
     detail = await response.text().catch(() => '');
   }
@@ -43,15 +72,19 @@ async function providerError(response: Response): Promise<Error> {
 
 export async function explainViaProvider(provider: ProviderId, model: string, apiKey: string, context: LookupContext): Promise<ContextAnswer> {
   if (provider === 'dummy') return explainWithDummy(context);
-  if (provider === 'nvidia') {
-    const response = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+  if (provider === 'openai' || provider === 'nvidia') {
+    const endpoint = provider === 'openai'
+      ? 'https://api.openai.com/v1/chat/completions'
+      : 'https://integrate.api.nvidia.com/v1/chat/completions';
+    const requestBody = { model, messages: [{ role: 'user', content: payload(context) }], ...(provider === 'nvidia' ? { temperature: 0.2, max_tokens: 512, stream: false } : /^o\d/.test(model) ? {} : { temperature: 0.2 }) };
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: payload(context) }], temperature: 0.2 })
+      body: JSON.stringify(requestBody)
     });
     if (!response.ok) throw await providerError(response);
     const data = await response.json();
-    return parseAnswer(data.choices?.[0]?.message?.content ?? '', context.word);
+    return parseAnswer(data.choices?.[0]?.message?.content ?? '');
   }
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
@@ -60,5 +93,5 @@ export async function explainViaProvider(provider: ProviderId, model: string, ap
   });
   if (!response.ok) throw await providerError(response);
   const data = await response.json();
-  return parseAnswer(data.candidates?.[0]?.content?.parts?.[0]?.text ?? '', context.word);
+  return parseAnswer(data.candidates?.[0]?.content?.parts?.[0]?.text ?? '');
 }
